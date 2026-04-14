@@ -99,4 +99,59 @@
       el.classList.add('active');
       layers.base.setVisible(type === 'base');
       layers.satellite.setVisible(type === 'satellite');
-      l
+      layers.hybrid.setVisible(type === 'hybrid');
+    }
+
+    function switchMap(type, el) {
+      currentMap = type;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+
+      const vmap = document.getElementById('map');
+      const imap = document.getElementById('imap');
+      const btns = document.getElementById('mapTypeBtns');
+
+      if (type === 'vworld') {
+        vmap.style.display = 'block';
+        imap.style.display = 'none';
+        btns.style.display = 'flex';
+        map.updateSize();
+      } else {
+        vmap.style.display = 'none';
+        imap.style.display = 'block';
+        btns.style.display = 'none';
+        if (type === 'kakao') imap.src = 'https://map.kakao.com/';
+        else if (type === 'naver') imap.src = 'https://map.naver.com/';
+      }
+    }
+
+    function search() {
+      const addr = document.getElementById('addr').value;
+      if (!addr) return alert('주소를 입력해주세요!');
+      const encoded = encodeURIComponent(addr);
+
+      if (currentMap === 'vworld') {
+        fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=ROAD&key=${API_KEY}`)
+          .then(r => r.json())
+          .then(data => {
+            const pt = data.response.result.point;
+            map.getView().animate({
+              center: ol.proj.fromLonLat([parseFloat(pt.x), parseFloat(pt.y)]),
+              zoom: 17,
+              duration: 800
+            });
+          })
+          .catch(() => alert('주소를 찾을 수 없어요!'));
+      } else if (currentMap === 'kakao') {
+        document.getElementById('imap').src = `https://map.kakao.com/?q=${encoded}`;
+      } else if (currentMap === 'naver') {
+        document.getElementById('imap').src = `https://map.naver.com/v5/search/${encoded}`;
+      }
+    }
+
+    document.getElementById('addr').addEventListener('keydown', e => {
+      if (e.key === 'Enter') search();
+    });
+  </script>
+</body>
+</html>
