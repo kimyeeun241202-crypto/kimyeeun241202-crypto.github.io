@@ -2,52 +2,80 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>지도 뷰어</title>
+  <title>3D 지형 뷰어</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: sans-serif; background: #1a1a2e; color: white; }
-    h1 { text-align: center; padding: 20px; font-size: 1.4rem; color: #a0c4ff; }
-    .search-box {
-      display: flex; justify-content: center; gap: 10px; padding: 10px;
+    h1 { text-align: center; padding: 16px; font-size: 1.3rem; color: #a0c4ff; }
+    .top {
+      display: flex; justify-content: center; align-items: center;
+      gap: 10px; padding: 10px;
     }
     input {
-      width: 300px; padding: 10px; border-radius: 8px;
+      width: 320px; padding: 10px; border-radius: 8px;
       border: none; font-size: 1rem;
     }
     button {
-      padding: 10px 20px; background: #4a90e2; color: white;
+      padding: 10px 18px; background: #4a90e2; color: white;
       border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;
     }
     button:hover { background: #357abd; }
-    #map {
-      width: 100%; height: calc(100vh - 130px);
-      border-top: 2px solid #4a90e2;
+    .tabs {
+      display: flex; justify-content: center; gap: 8px; padding: 8px;
     }
-    #status {
-      text-align: center; padding: 8px; color: #ffd166; font-size: 0.9rem;
+    .tab {
+      padding: 6px 16px; border-radius: 6px; cursor: pointer;
+      background: #2a2a4a; border: 1px solid #4a90e2; color: #a0c4ff;
     }
+    .tab.active { background: #4a90e2; color: white; }
+    #map { width: 100%; height: calc(100vh - 160px); border: none; }
   </style>
 </head>
 <body>
-  <h1>🗺️ 지도 뷰어</h1>
-  <div class="search-box">
-    <input id="addr" type="text" placeholder="주소를 입력하세요 (예: 서울특별시 중구 세종대로 110)">
+  <h1>🗺️ 3D 지형 뷰어</h1>
+  <div class="top">
+    <input id="addr" type="text" placeholder="주소 입력 (예: 서울특별시 중구 세종대로 110)">
     <button onclick="search()">검색</button>
   </div>
-  <div id="status">V-World API 키를 입력하면 지적도도 볼 수 있어요!</div>
-  <iframe id="map" src="https://map.kakao.com/" frameborder="0"></iframe>
+  <div class="tabs">
+    <div class="tab active" onclick="switchMap('kakao')">카카오맵</div>
+    <div class="tab" onclick="switchMap('naver')">네이버지도</div>
+    <div class="tab" onclick="switchMap('vworld')">브이월드</div>
+  </div>
+  <iframe id="map" src="https://map.kakao.com/"></iframe>
 
   <script>
-    function search() {
-      const addr = document.getElementById('addr').value;
-      if (!addr) return alert('주소를 입력해주세요!');
-      const encoded = encodeURIComponent(addr);
-      document.getElementById('map').src =
-        `https://map.kakao.com/?q=${encoded}`;
-      document.getElementById('status').textContent = `"${addr}" 검색 중...`;
+    const API_KEY = 'B646FA6C-D6EF-3AD0-A733-6F07266A5FD5';
+    let currentMap = 'kakao';
+    let currentAddr = '';
+
+    function switchMap(type) {
+      currentMap = type;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      if (currentAddr) search();
+      else {
+        if (type === 'kakao') document.getElementById('map').src = 'https://map.kakao.com/';
+        else if (type === 'naver') document.getElementById('map').src = 'https://map.naver.com/';
+        else if (type === 'vworld') document.getElementById('map').src = 'https://map.vworld.kr/map/maps.do';
+      }
     }
 
-    document.getElementById('addr').addEventListener('keydown', function(e) {
+    function search() {
+      currentAddr = document.getElementById('addr').value;
+      if (!currentAddr) return alert('주소를 입력해주세요!');
+      const encoded = encodeURIComponent(currentAddr);
+      const map = document.getElementById('map');
+      if (currentMap === 'kakao') {
+        map.src = `https://map.kakao.com/?q=${encoded}`;
+      } else if (currentMap === 'naver') {
+        map.src = `https://map.naver.com/v5/search/${encoded}`;
+      } else if (currentMap === 'vworld') {
+        map.src = `https://map.vworld.kr/map/maps.do?search=${encoded}`;
+      }
+    }
+
+    document.getElementById('addr').addEventListener('keydown', e => {
       if (e.key === 'Enter') search();
     });
   </script>
