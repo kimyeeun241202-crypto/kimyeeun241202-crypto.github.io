@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>지도 뷰어</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #1a1a2e; color: white; }
+    h1 { text-align: center; padding: 20px; font-size: 1.4rem; color: #a0c4ff; }
+    .search-box {
+      display: flex; justify-content: center; gap: 10px; padding: 10px;
+    }
+    input {
+      width: 300px; padding: 10px; border-radius: 8px;
+      border: none; font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px; background: #4a90e2; color: white;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;
+    }
+    button:hover { background: #357abd; }
+    #map {
+      width: 100%; height: calc(100vh - 130px);
+      border-top: 2px solid #4a90e2;
+    }
+    #status {
+      text-align: center; padding: 8px; color: #ffd166; font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🗺️ 지도 뷰어</h1>
+  <div class="search-box">
+    <input id="addr" type="text" placeholder="주소를 입력하세요 (예: 서울특별시 중구 세종대로 110)">
+    <button onclick="search()">검색</button>
+  </div>
+  <div id="status">V-World API 키를 입력하면 지적도도 볼 수 있어요!</div>
+  <iframe id="map" src="https://map.kakao.com/" frameborder="0"></iframe>
+
+  <script>
+    function search() {
+      const addr = document.getElementById('addr').value;
+      if (!addr) return alert('주소를 입력해주세요!');
+      const encoded = encodeURIComponent(addr);
+      document.getElementById('map').src =
+        `https://map.kakao.com/?q=${encoded}`;
+      document.getElementById('status').textContent = `"${addr}" 검색 중...`;
+    }
+
+    document.getElementById('addr').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') search();
+    });
+  </script>
+</body>
+</html>
