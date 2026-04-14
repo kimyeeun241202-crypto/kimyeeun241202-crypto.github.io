@@ -9,82 +9,63 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f5f5; display: flex; height: 100vh; overflow: hidden; }
 
-    /* 왼쪽 사이드바 */
     .sidebar {
       width: 300px; min-width: 300px; background: white;
       box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column;
-      z-index: 10;
+      display: flex; flex-direction: column; z-index: 10;
     }
-    .sidebar-header {
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .sidebar-header h1 {
-      font-size: 1.1rem; font-weight: 700; color: #222;
-      margin-bottom: 12px;
-    }
-    .search-wrap {
-      display: flex; gap: 6px;
-    }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid #eee; }
+    .sidebar-header h1 { font-size: 1.1rem; font-weight: 700; color: #222; margin-bottom: 12px; }
+    .search-wrap { display: flex; gap: 6px; }
     .search-wrap input {
       flex: 1; padding: 9px 12px; border: 1px solid #ddd;
-      border-radius: 6px; font-size: 0.9rem; outline: none;
-      color: #333;
+      border-radius: 6px; font-size: 0.9rem; outline: none; color: #333;
     }
     .search-wrap input:focus { border-color: #4a90e2; }
     .search-wrap button {
       padding: 9px 14px; background: #4a90e2; color: white;
-      border: none; border-radius: 6px; cursor: pointer;
-      font-size: 0.9rem; font-weight: 600;
+      border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
     }
     .search-wrap button:hover { background: #357abd; }
 
-    .sidebar-section {
-      padding: 16px 20px;
-      border-bottom: 1px solid #eee;
-    }
+    .sidebar-section { padding: 16px 20px; border-bottom: 1px solid #eee; }
     .sidebar-section label {
       font-size: 0.8rem; color: #888; font-weight: 600;
       display: block; margin-bottom: 8px; text-transform: uppercase;
-      letter-spacing: 0.05em;
     }
-    .result-addr {
-      font-size: 0.85rem; color: #444; line-height: 1.5;
-      min-height: 20px;
-    }
+    .result-addr { font-size: 0.85rem; color: #444; line-height: 1.5; min-height: 20px; }
 
-    /* 오른쪽 지도 영역 */
-    .map-wrap {
-      flex: 1; position: relative;
-    }
+    .radius-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .radius-wrap input[type=range] { width: 100%; accent-color: #4a90e2; }
+    .radius-value { font-size: 0.9rem; color: #4a90e2; font-weight: 700; text-align: center; }
 
-    /* 오른쪽 상단 지도 선택 드롭다운 */
-    .map-selector {
-      position: absolute; top: 14px; right: 14px; z-index: 100;
+    .download-btn {
+      margin: 20px; padding: 12px;
+      background: #2ecc71; color: white;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-size: 1rem; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(46,204,113,0.3);
     }
+    .download-btn:hover { background: #27ae60; }
+    .download-btn:disabled { background: #aaa; cursor: not-allowed; box-shadow: none; }
+
+    .status { padding: 0 20px; font-size: 0.8rem; color: #888; }
+
+    .map-wrap { flex: 1; position: relative; }
+    .map-selector { position: absolute; top: 14px; right: 14px; z-index: 100; }
     .map-selector select {
-      padding: 8px 14px; border-radius: 8px;
-      border: 1px solid #ddd; background: white;
-      font-size: 0.9rem; color: #333;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      cursor: pointer; outline: none;
+      padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd;
+      background: white; font-size: 0.9rem; color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; outline: none;
     }
-
-    /* 레이어 버튼 (브이월드용) */
-    .layer-btns {
-      position: absolute; top: 14px; right: 160px; z-index: 100;
-      display: flex; gap: 4px;
-    }
+    .layer-btns { position: absolute; top: 14px; right: 160px; z-index: 100; display: flex; gap: 4px; }
     .layer-btn {
       padding: 7px 12px; border-radius: 6px; cursor: pointer;
       background: white; border: 1px solid #ddd;
       font-size: 0.85rem; color: #555;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .layer-btn.active {
-      background: #4a90e2; color: white; border-color: #4a90e2;
-    }
+    .layer-btn.active { background: #4a90e2; color: white; border-color: #4a90e2; }
 
     #map { width: 100%; height: 100%; }
     #imap { width: 100%; height: 100%; border: none; display: none; position: absolute; top: 0; left: 0; }
@@ -92,7 +73,6 @@
 </head>
 <body>
 
-  <!-- 왼쪽 사이드바 -->
   <div class="sidebar">
     <div class="sidebar-header">
       <h1>🗺️ 3D 지형 뷰어</h1>
@@ -101,13 +81,27 @@
         <button onclick="search()">검색</button>
       </div>
     </div>
+
     <div class="sidebar-section">
       <label>검색 결과</label>
       <div class="result-addr" id="resultAddr">주소를 검색해주세요</div>
     </div>
+
+    <div class="sidebar-section">
+      <label>반경 설정</label>
+      <div class="radius-wrap">
+        <input type="range" id="radius" min="100" max="1000" step="100" value="300" oninput="updateRadius()">
+        <div class="radius-value" id="radiusValue">300m</div>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <button class="download-btn" id="downloadBtn" onclick="downloadOBJ()" disabled>
+      ⬇️ OBJ 파일 다운로드
+    </button>
   </div>
 
-  <!-- 오른쪽 지도 -->
   <div class="map-wrap">
     <div class="layer-btns" id="layerBtns">
       <div class="layer-btn active" onclick="switchLayer('base', this)">일반</div>
@@ -127,7 +121,11 @@
 
   <script>
     const API_KEY = 'B646FA6C-D6EF-3AD0-A733-6F07266A5FD5';
+    const VERCEL_URL = 'https://kimyeeun241202-crypto-github-io.vercel.app';
     let currentMap = 'vworld';
+    let currentLat = null;
+    let currentLon = null;
+    let circleLayer = null;
 
     const layers = {
       base: new ol.layer.Tile({
@@ -149,14 +147,37 @@
       })
     };
 
+    circleLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: '#4a90e2', width: 2 }),
+        fill: new ol.style.Fill({ color: 'rgba(74,144,226,0.1)' })
+      })
+    });
+
     const map = new ol.Map({
       target: 'map',
-      layers: [layers.base, layers.satellite, layers.hybrid],
+      layers: [layers.base, layers.satellite, layers.hybrid, circleLayer],
       view: new ol.View({
         center: ol.proj.fromLonLat([126.978271, 37.566643]),
         zoom: 15
       })
     });
+
+    function updateRadius() {
+      const r = document.getElementById('radius').value;
+      document.getElementById('radiusValue').textContent = r + 'm';
+      if (currentLat && currentLon) drawCircle();
+    }
+
+    function drawCircle() {
+      const r = parseInt(document.getElementById('radius').value);
+      const center = ol.proj.fromLonLat([currentLon, currentLat]);
+      const circle = new ol.geom.Circle(center, r);
+      const feature = new ol.Feature(circle);
+      circleLayer.getSource().clear();
+      circleLayer.getSource().addFeature(feature);
+    }
 
     function switchLayer(type, el) {
       document.querySelectorAll('.layer-btn').forEach(t => t.classList.remove('active'));
@@ -171,7 +192,6 @@
       const vmap = document.getElementById('map');
       const imap = document.getElementById('imap');
       const layerBtns = document.getElementById('layerBtns');
-
       if (type === 'vworld') {
         vmap.style.display = 'block';
         imap.style.display = 'none';
@@ -190,27 +210,58 @@
       const addr = document.getElementById('addr').value;
       if (!addr) return alert('주소를 입력해주세요!');
       const encoded = encodeURIComponent(addr);
+      document.getElementById('status').textContent = '검색 중...';
 
-      if (currentMap === 'vworld') {
-        fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=ROAD&key=${API_KEY}`)
-          .then(r => r.json())
-          .then(data => {
-            const pt = data.response.result.point;
-            document.getElementById('resultAddr').textContent = addr;
-            map.getView().animate({
-              center: ol.proj.fromLonLat([parseFloat(pt.x), parseFloat(pt.y)]),
-              zoom: 17,
-              duration: 800
-            });
-          })
-          .catch(() => alert('주소를 찾을 수 없어요!'));
-      } else if (currentMap === 'kakao') {
-        document.getElementById('imap').src = `https://map.kakao.com/?q=${encoded}`;
-        document.getElementById('resultAddr').textContent = addr;
-      } else if (currentMap === 'naver') {
-        document.getElementById('imap').src = `https://map.naver.com/v5/search/${encoded}`;
-        document.getElementById('resultAddr').textContent = addr;
+      // 도로명 먼저 시도, 실패하면 지번으로
+      fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=ROAD&key=${API_KEY}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.response.status === 'OK') return data.response.result.point;
+          // 지번 주소로 재시도
+          return fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=PARCEL&key=${API_KEY}`)
+            .then(r => r.json())
+            .then(d => d.response.result.point);
+        })
+        .then(pt => {
+          currentLon = parseFloat(pt.x);
+          currentLat = parseFloat(pt.y);
+          document.getElementById('resultAddr').textContent = addr;
+          document.getElementById('status').textContent = `좌표: ${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
+          document.getElementById('downloadBtn').disabled = false;
+          map.getView().animate({
+            center: ol.proj.fromLonLat([currentLon, currentLat]),
+            zoom: 17, duration: 800
+          });
+          drawCircle();
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = '주소를 찾을 수 없어요';
+        });
+    }
+
+    async function downloadOBJ() {
+      if (!currentLat || !currentLon) return;
+      const radius = document.getElementById('radius').value;
+      const btn = document.getElementById('downloadBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ 생성 중...';
+      document.getElementById('status').textContent = '지형 데이터 처리 중...';
+
+      try {
+        const res = await fetch(`${VERCEL_URL}/api/terrain?lat=${currentLat}&lon=${currentLon}&radius=${radius}`);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'terrain.obj';
+        a.click();
+        document.getElementById('status').textContent = '✅ 다운로드 완료!';
+      } catch (err) {
+        document.getElementById('status').textContent = '❌ 오류 발생: ' + err.message;
       }
+
+      btn.disabled = false;
+      btn.textContent = '⬇️ OBJ 파일 다운로드';
     }
 
     document.getElementById('addr').addEventListener('keydown', e => {
