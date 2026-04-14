@@ -7,59 +7,123 @@
   <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #1a1a2e; color: white; }
-    h1 { text-align: center; padding: 14px; font-size: 1.3rem; color: #a0c4ff; }
-    .top {
-      display: flex; justify-content: center; align-items: center;
-      gap: 10px; padding: 8px;
+    body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f5f5; display: flex; height: 100vh; overflow: hidden; }
+
+    /* 왼쪽 사이드바 */
+    .sidebar {
+      width: 300px; min-width: 300px; background: white;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column;
+      z-index: 10;
     }
-    input {
-      width: 320px; padding: 10px; border-radius: 8px;
-      border: none; font-size: 1rem;
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
     }
-    button {
-      padding: 10px 18px; background: #4a90e2; color: white;
-      border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;
+    .sidebar-header h1 {
+      font-size: 1.1rem; font-weight: 700; color: #222;
+      margin-bottom: 12px;
     }
-    button:hover { background: #357abd; }
-    .tabs {
-      display: flex; justify-content: center; gap: 8px; padding: 6px;
+    .search-wrap {
+      display: flex; gap: 6px;
     }
-    .tab {
-      padding: 6px 16px; border-radius: 6px; cursor: pointer;
-      background: #2a2a4a; border: 1px solid #4a90e2; color: #a0c4ff;
+    .search-wrap input {
+      flex: 1; padding: 9px 12px; border: 1px solid #ddd;
+      border-radius: 6px; font-size: 0.9rem; outline: none;
+      color: #333;
     }
-    .tab.active { background: #4a90e2; color: white; }
-    .map-type-btns {
-      display: flex; justify-content: center; gap: 6px; padding: 4px;
+    .search-wrap input:focus { border-color: #4a90e2; }
+    .search-wrap button {
+      padding: 9px 14px; background: #4a90e2; color: white;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 0.9rem; font-weight: 600;
     }
-    .mtype {
-      padding: 4px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;
-      background: #2a2a4a; border: 1px solid #6a6a8a; color: #ccc;
+    .search-wrap button:hover { background: #357abd; }
+
+    .sidebar-section {
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
     }
-    .mtype.active { background: #6a4ae2; color: white; border-color: #6a4ae2; }
-    #map { width: 100%; height: calc(100vh - 200px); }
-    #imap { width: 100%; height: calc(100vh - 160px); border: none; display: none; }
+    .sidebar-section label {
+      font-size: 0.8rem; color: #888; font-weight: 600;
+      display: block; margin-bottom: 8px; text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .result-addr {
+      font-size: 0.85rem; color: #444; line-height: 1.5;
+      min-height: 20px;
+    }
+
+    /* 오른쪽 지도 영역 */
+    .map-wrap {
+      flex: 1; position: relative;
+    }
+
+    /* 오른쪽 상단 지도 선택 드롭다운 */
+    .map-selector {
+      position: absolute; top: 14px; right: 14px; z-index: 100;
+    }
+    .map-selector select {
+      padding: 8px 14px; border-radius: 8px;
+      border: 1px solid #ddd; background: white;
+      font-size: 0.9rem; color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      cursor: pointer; outline: none;
+    }
+
+    /* 레이어 버튼 (브이월드용) */
+    .layer-btns {
+      position: absolute; top: 14px; right: 160px; z-index: 100;
+      display: flex; gap: 4px;
+    }
+    .layer-btn {
+      padding: 7px 12px; border-radius: 6px; cursor: pointer;
+      background: white; border: 1px solid #ddd;
+      font-size: 0.85rem; color: #555;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .layer-btn.active {
+      background: #4a90e2; color: white; border-color: #4a90e2;
+    }
+
+    #map { width: 100%; height: 100%; }
+    #imap { width: 100%; height: 100%; border: none; display: none; position: absolute; top: 0; left: 0; }
   </style>
 </head>
 <body>
-  <h1>🗺️ 3D 지형 뷰어</h1>
-  <div class="top">
-    <input id="addr" type="text" placeholder="주소 입력 (예: 서울특별시 중구 세종대로 110)">
-    <button onclick="search()">검색</button>
+
+  <!-- 왼쪽 사이드바 -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>🗺️ 3D 지형 뷰어</h1>
+      <div class="search-wrap">
+        <input id="addr" type="text" placeholder="주소 입력">
+        <button onclick="search()">검색</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <label>검색 결과</label>
+      <div class="result-addr" id="resultAddr">주소를 검색해주세요</div>
+    </div>
   </div>
-  <div class="tabs">
-    <div class="tab active" onclick="switchMap('vworld', this)">브이월드</div>
-    <div class="tab" onclick="switchMap('kakao', this)">카카오맵</div>
-    <div class="tab" onclick="switchMap('naver', this)">네이버지도</div>
+
+  <!-- 오른쪽 지도 -->
+  <div class="map-wrap">
+    <div class="layer-btns" id="layerBtns">
+      <div class="layer-btn active" onclick="switchLayer('base', this)">일반</div>
+      <div class="layer-btn" onclick="switchLayer('satellite', this)">위성</div>
+      <div class="layer-btn" onclick="switchLayer('hybrid', this)">하이브리드</div>
+    </div>
+    <div class="map-selector">
+      <select onchange="switchMap(this.value)">
+        <option value="vworld">브이월드</option>
+        <option value="kakao">카카오맵</option>
+        <option value="naver">네이버지도</option>
+      </select>
+    </div>
+    <div id="map"></div>
+    <iframe id="imap" src=""></iframe>
   </div>
-  <div class="map-type-btns" id="mapTypeBtns">
-    <div class="mtype active" onclick="switchLayer('base', this)">일반</div>
-    <div class="mtype" onclick="switchLayer('satellite', this)">위성</div>
-    <div class="mtype" onclick="switchLayer('hybrid', this)">하이브리드</div>
-  </div>
-  <div id="map"></div>
-  <iframe id="imap" src=""></iframe>
 
   <script>
     const API_KEY = 'B646FA6C-D6EF-3AD0-A733-6F07266A5FD5';
@@ -95,31 +159,28 @@
     });
 
     function switchLayer(type, el) {
-      document.querySelectorAll('.mtype').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.layer-btn').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
       layers.base.setVisible(type === 'base');
       layers.satellite.setVisible(type === 'satellite');
       layers.hybrid.setVisible(type === 'hybrid');
     }
 
-    function switchMap(type, el) {
+    function switchMap(type) {
       currentMap = type;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
-
       const vmap = document.getElementById('map');
       const imap = document.getElementById('imap');
-      const btns = document.getElementById('mapTypeBtns');
+      const layerBtns = document.getElementById('layerBtns');
 
       if (type === 'vworld') {
         vmap.style.display = 'block';
         imap.style.display = 'none';
-        btns.style.display = 'flex';
+        layerBtns.style.display = 'flex';
         map.updateSize();
       } else {
         vmap.style.display = 'none';
         imap.style.display = 'block';
-        btns.style.display = 'none';
+        layerBtns.style.display = 'none';
         if (type === 'kakao') imap.src = 'https://map.kakao.com/';
         else if (type === 'naver') imap.src = 'https://map.naver.com/';
       }
@@ -135,6 +196,7 @@
           .then(r => r.json())
           .then(data => {
             const pt = data.response.result.point;
+            document.getElementById('resultAddr').textContent = addr;
             map.getView().animate({
               center: ol.proj.fromLonLat([parseFloat(pt.x), parseFloat(pt.y)]),
               zoom: 17,
@@ -144,8 +206,10 @@
           .catch(() => alert('주소를 찾을 수 없어요!'));
       } else if (currentMap === 'kakao') {
         document.getElementById('imap').src = `https://map.kakao.com/?q=${encoded}`;
+        document.getElementById('resultAddr').textContent = addr;
       } else if (currentMap === 'naver') {
         document.getElementById('imap').src = `https://map.naver.com/v5/search/${encoded}`;
+        document.getElementById('resultAddr').textContent = addr;
       }
     }
 
