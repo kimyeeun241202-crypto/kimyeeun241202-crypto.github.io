@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>3D 지형 뷰어</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: sans-serif; background: #1a1a2e; color: white; }
@@ -28,7 +30,15 @@
       background: #2a2a4a; border: 1px solid #4a90e2; color: #a0c4ff;
     }
     .tab.active { background: #4a90e2; color: white; }
-    #vmap { width: 100%; height: calc(100vh - 160px); }
+    .map-type-btns {
+      display: flex; justify-content: center; gap: 6px; padding: 4px;
+    }
+    .mtype {
+      padding: 4px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;
+      background: #2a2a4a; border: 1px solid #6a6a8a; color: #ccc;
+    }
+    .mtype.active { background: #6a4ae2; color: white; border-color: #6a4ae2; }
+    #map { width: 100%; height: calc(100vh - 200px); }
     #imap { width: 100%; height: calc(100vh - 160px); border: none; display: none; }
   </style>
 </head>
@@ -43,76 +53,50 @@
     <div class="tab" onclick="switchMap('kakao', this)">카카오맵</div>
     <div class="tab" onclick="switchMap('naver', this)">네이버지도</div>
   </div>
-  <div id="vmap"></div>
+  <div class="map-type-btns" id="mapTypeBtns">
+    <div class="mtype active" onclick="switchLayer('base', this)">일반</div>
+    <div class="mtype" onclick="switchLayer('satellite', this)">위성</div>
+    <div class="mtype" onclick="switchLayer('hybrid', this)">하이브리드</div>
+  </div>
+  <div id="map"></div>
   <iframe id="imap" src=""></iframe>
 
   <script>
     const API_KEY = 'B646FA6C-D6EF-3AD0-A733-6F07266A5FD5';
     let currentMap = 'vworld';
-    let map = null;
 
-    // 브이월드 스크립트 동적 로드
-    const script = document.createElement('script');
-    script.src = `https://map.vworld.kr/js/webglMapInit.js.do?version=2.0&apiKey=${API_KEY}`;
-    script.onload = function() {
-      map = new vw.Map();
-      map.setMapId('vmap');
-      map.setOption({
-        initPosition: new vw.CameraPosition(
-          new vw.CoordZ(126.978271, 37.566643, 1000),
-          new vw.Direction(0, -45, 0)
-        ),
-        logo: false,
-        navigation: true
-      });
+    const layers = {
+      base: new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Base/{z}/{y}/{x}.png`
+        })
+      }),
+      satellite: new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.XYZ({
+          url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Satellite/{z}/{y}/{x}.jpeg`
+        })
+      }),
+      hybrid: new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.XYZ({
+          url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Hybrid/{z}/{y}/{x}.png`
+        })
+      })
     };
-    document.head.appendChild(script);
 
-    function switchMap(type, el) {
-      currentMap = type;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
-
-      const vmap = document.getElementById('vmap');
-      const imap = document.getElementById('imap');
-
-      if (type === 'vworld') {
-        vmap.style.display = 'block';
-        imap.style.display = 'none';
-      } else {
-        vmap.style.display = 'none';
-        imap.style.display = 'block';
-        if (type === 'kakao') imap.src = 'https://map.kakao.com/';
-        else if (type === 'naver') imap.src = 'https://map.naver.com/';
-      }
-    }
-
-    function search() {
-      const addr = document.getElementById('addr').value;
-      if (!addr) return alert('주소를 입력해주세요!');
-      const encoded = encodeURIComponent(addr);
-
-      if (currentMap === 'vworld') {
-        fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=ROAD&key=${API_KEY}`)
-          .then(r => r.json())
-          .then(data => {
-            const pt = data.response.result.point;
-            map.setPosition(new vw.CameraPosition(
-              new vw.CoordZ(parseFloat(pt.x), parseFloat(pt.y), 500),
-              new vw.Direction(0, -45, 0)
-            ));
-          })
-          .catch(() => alert('주소를 찾을 수 없어요!'));
-      } else if (currentMap === 'kakao') {
-        document.getElementById('imap').src = `https://map.kakao.com/?q=${encoded}`;
-      } else if (currentMap === 'naver') {
-        document.getElementById('imap').src = `https://map.naver.com/v5/search/${encoded}`;
-      }
-    }
-
-    document.getElementById('addr').addEventListener('keydown', e => {
-      if (e.key === 'Enter') search();
+    const map = new ol.Map({
+      target: 'map',
+      layers: [layers.base, layers.satellite, layers.hybrid],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([126.978271, 37.566643]),
+        zoom: 15
+      })
     });
-  </script>
-</body>
-</html>
+
+    function switchLayer(type, el) {
+      document.querySelectorAll('.mtype').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      layers.base.setVisible(type === 'base');
+      layers.satellite.setVisible(type === 'satellite');
+      l
