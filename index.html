@@ -8,71 +8,35 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f5f5; display: flex; height: 100vh; overflow: hidden; }
-
-    .sidebar {
-      width: 300px; min-width: 300px; background: white;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column; z-index: 10;
-    }
+    .sidebar { width: 300px; min-width: 300px; background: white; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 10; }
     .sidebar-header { padding: 20px; border-bottom: 1px solid #eee; }
     .sidebar-header h1 { font-size: 1.1rem; font-weight: 700; color: #222; margin-bottom: 12px; }
     .search-wrap { display: flex; gap: 6px; }
-    .search-wrap input {
-      flex: 1; padding: 9px 12px; border: 1px solid #ddd;
-      border-radius: 6px; font-size: 0.9rem; outline: none; color: #333;
-    }
+    .search-wrap input { flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; outline: none; color: #333; }
     .search-wrap input:focus { border-color: #4a90e2; }
-    .search-wrap button {
-      padding: 9px 14px; background: #4a90e2; color: white;
-      border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
-    }
+    .search-wrap button { padding: 9px 14px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
     .search-wrap button:hover { background: #357abd; }
-
     .sidebar-section { padding: 16px 20px; border-bottom: 1px solid #eee; }
-    .sidebar-section label {
-      font-size: 0.8rem; color: #888; font-weight: 600;
-      display: block; margin-bottom: 8px; text-transform: uppercase;
-    }
+    .sidebar-section label { font-size: 0.8rem; color: #888; font-weight: 600; display: block; margin-bottom: 8px; text-transform: uppercase; }
     .result-addr { font-size: 0.85rem; color: #444; line-height: 1.5; min-height: 20px; }
-
     .radius-wrap { display: flex; flex-direction: column; gap: 8px; }
     .radius-wrap input[type=range] { width: 100%; accent-color: #4a90e2; }
     .radius-value { font-size: 0.9rem; color: #4a90e2; font-weight: 700; text-align: center; }
-
-    .download-btn {
-      margin: 20px; padding: 12px;
-      background: #2ecc71; color: white;
-      border: none; border-radius: 8px; cursor: pointer;
-      font-size: 1rem; font-weight: 700;
-      box-shadow: 0 2px 8px rgba(46,204,113,0.3);
-    }
+    .download-btn { margin: 20px; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 700; box-shadow: 0 2px 8px rgba(46,204,113,0.3); }
     .download-btn:hover { background: #27ae60; }
     .download-btn:disabled { background: #aaa; cursor: not-allowed; box-shadow: none; }
-
     .status { padding: 0 20px 12px; font-size: 0.8rem; color: #888; }
-
     .map-wrap { flex: 1; position: relative; }
     .map-selector { position: absolute; top: 14px; right: 14px; z-index: 100; }
-    .map-selector select {
-      padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd;
-      background: white; font-size: 0.9rem; color: #333;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; outline: none;
-    }
+    .map-selector select { padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background: white; font-size: 0.9rem; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; outline: none; }
     .layer-btns { position: absolute; top: 14px; right: 160px; z-index: 100; display: flex; gap: 4px; }
-    .layer-btn {
-      padding: 7px 12px; border-radius: 6px; cursor: pointer;
-      background: white; border: 1px solid #ddd;
-      font-size: 0.85rem; color: #555;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+    .layer-btn { padding: 7px 12px; border-radius: 6px; cursor: pointer; background: white; border: 1px solid #ddd; font-size: 0.85rem; color: #555; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
     .layer-btn.active { background: #4a90e2; color: white; border-color: #4a90e2; }
-
     #map { width: 100%; height: 100%; }
     #imap { width: 100%; height: 100%; border: none; display: none; position: absolute; top: 0; left: 0; }
   </style>
 </head>
 <body>
-
   <div class="sidebar">
     <div class="sidebar-header">
       <h1>🗺️ 3D 지형 뷰어</h1>
@@ -81,12 +45,10 @@
         <button onclick="search()">검색</button>
       </div>
     </div>
-
     <div class="sidebar-section">
       <label>검색 결과</label>
       <div class="result-addr" id="resultAddr">주소를 검색해주세요</div>
     </div>
-
     <div class="sidebar-section">
       <label>반경 설정</label>
       <div class="radius-wrap">
@@ -94,12 +56,8 @@
         <div class="radius-value" id="radiusValue">300m</div>
       </div>
     </div>
-
     <div class="status" id="status"></div>
-
-    <button class="download-btn" id="downloadBtn" onclick="downloadOBJ()" disabled>
-      ⬇️ OBJ 파일 다운로드
-    </button>
+    <button class="download-btn" id="downloadBtn" onclick="downloadOBJ()" disabled>⬇️ OBJ 파일 다운로드</button>
   </div>
 
   <div class="map-wrap">
@@ -121,30 +79,15 @@
 
   <script>
     const API_KEY = 'B646FA6C-D6EF-3AD0-A733-6F07266A5FD5';
-    const VERCEL_URL = 'https://kimyeeun241202-crypto-github-io.vercel.app';
     let currentMap = 'vworld';
     let currentLat = null;
     let currentLon = null;
     let circleLayer = null;
 
     const layers = {
-      base: new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Base/{z}/{y}/{x}.png`
-        })
-      }),
-      satellite: new ol.layer.Tile({
-        visible: false,
-        source: new ol.source.XYZ({
-          url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Satellite/{z}/{y}/{x}.jpeg`
-        })
-      }),
-      hybrid: new ol.layer.Tile({
-        visible: false,
-        source: new ol.source.XYZ({
-          url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Hybrid/{z}/{y}/{x}.png`
-        })
-      })
+      base: new ol.layer.Tile({ source: new ol.source.XYZ({ url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Base/{z}/{y}/{x}.png` }) }),
+      satellite: new ol.layer.Tile({ visible: false, source: new ol.source.XYZ({ url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Satellite/{z}/{y}/{x}.jpeg` }) }),
+      hybrid: new ol.layer.Tile({ visible: false, source: new ol.source.XYZ({ url: `https://api.vworld.kr/req/wmts/1.0.0/${API_KEY}/Hybrid/{z}/{y}/{x}.png` }) })
     };
 
     circleLayer = new ol.layer.Vector({
@@ -158,10 +101,7 @@
     const map = new ol.Map({
       target: 'map',
       layers: [layers.base, layers.satellite, layers.hybrid, circleLayer],
-      view: new ol.View({
-        center: ol.proj.fromLonLat([126.978271, 37.566643]),
-        zoom: 15
-      })
+      view: new ol.View({ center: ol.proj.fromLonLat([126.978271, 37.566643]), zoom: 15 })
     });
 
     function updateRadius() {
@@ -193,38 +133,56 @@
       const imap = document.getElementById('imap');
       const layerBtns = document.getElementById('layerBtns');
       if (type === 'vworld') {
-        vmap.style.display = 'block';
-        imap.style.display = 'none';
-        layerBtns.style.display = 'flex';
-        map.updateSize();
+        vmap.style.display = 'block'; imap.style.display = 'none'; layerBtns.style.display = 'flex'; map.updateSize();
       } else {
-        vmap.style.display = 'none';
-        imap.style.display = 'block';
-        layerBtns.style.display = 'none';
+        vmap.style.display = 'none'; imap.style.display = 'block'; layerBtns.style.display = 'none';
         if (type === 'kakao') imap.src = 'https://map.kakao.com/';
         else if (type === 'naver') imap.src = 'https://map.naver.com/';
       }
+    }
+
+    function searchAddress(address) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'vworldCallback_' + Date.now();
+        const encoded = encodeURIComponent(address);
+        const script = document.createElement('script');
+        script.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=ROAD&key=${API_KEY}&callback=${callbackName}`;
+        window[callbackName] = function(data) {
+          document.head.removeChild(script);
+          delete window[callbackName];
+          if (data.response.status === 'OK') {
+            resolve(data.response.result.point);
+          } else {
+            const callbackName2 = 'vworldCallback_' + Date.now();
+            const script2 = document.createElement('script');
+            script2.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=PARCEL&key=${API_KEY}&callback=${callbackName2}`;
+            window[callbackName2] = function(data2) {
+              document.head.removeChild(script2);
+              delete window[callbackName2];
+              if (data2.response.status === 'OK') resolve(data2.response.result.point);
+              else reject(new Error('주소를 찾을 수 없어요'));
+            };
+            document.head.appendChild(script2);
+          }
+        };
+        script.onerror = () => reject(new Error('네트워크 오류'));
+        document.head.appendChild(script);
+      });
     }
 
     async function search() {
       const addr = document.getElementById('addr').value;
       if (!addr) return alert('주소를 입력해주세요!');
       document.getElementById('status').textContent = '검색 중...';
-
       try {
-        // 브라우저에서 직접 V-World 호출 (JSONP 방식)
         const result = await searchAddress(addr);
         currentLon = parseFloat(result.x);
         currentLat = parseFloat(result.y);
         document.getElementById('resultAddr').textContent = addr;
         document.getElementById('status').textContent = `📍 ${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
         document.getElementById('downloadBtn').disabled = false;
-
         if (currentMap === 'vworld') {
-          map.getView().animate({
-            center: ol.proj.fromLonLat([currentLon, currentLat]),
-            zoom: 17, duration: 800
-          });
+          map.getView().animate({ center: ol.proj.fromLonLat([currentLon, currentLat]), zoom: 17, duration: 800 });
           drawCircle();
         } else if (currentMap === 'kakao') {
           document.getElementById('imap').src = `https://map.kakao.com/?q=${encodeURIComponent(addr)}`;
@@ -236,62 +194,124 @@
       }
     }
 
-    function searchAddress(address) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'vworldCallback_' + Date.now();
-        const encoded = encodeURIComponent(address);
+    // Mapzen Terrarium 타일에서 고도값 추출
+    function lonLatToTile(lon, lat, zoom) {
+      const x = Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+      const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+      return { x, y, z: zoom };
+    }
 
-        // 도로명 먼저 시도
-        const script = document.createElement('script');
-        script.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=ROAD&key=${API_KEY}&callback=${callbackName}`;
+    function getElevationFromPixel(r, g, b) {
+      return (r * 256 + g + b / 256) - 32768;
+    }
 
-        window[callbackName] = function(data) {
-          document.head.removeChild(script);
-          delete window[callbackName];
+    async function getElevationGrid(lat, lon, radiusM, gridSize) {
+      const zoom = 13;
+      const tile = lonLatToTile(lon, lat, zoom);
+      const url = `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${zoom}/${tile.x}/${tile.y}.png`;
 
-          if (data.response.status === 'OK') {
-            resolve(data.response.result.point);
-          } else {
-            // 지번으로 재시도
-            const callbackName2 = 'vworldCallback_' + Date.now();
-            const script2 = document.createElement('script');
-            script2.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=PARCEL&key=${API_KEY}&callback=${callbackName2}`;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
 
-            window[callbackName2] = function(data2) {
-              document.head.removeChild(script2);
-              delete window[callbackName2];
-              if (data2.response.status === 'OK') {
-                resolve(data2.response.result.point);
-              } else {
-                reject(new Error('주소를 찾을 수 없어요'));
-              }
-            };
-            document.head.appendChild(script2);
+          const degPerM = 1 / 111000;
+          const grid = [];
+
+          for (let i = 0; i < gridSize; i++) {
+            grid[i] = [];
+            for (let j = 0; j < gridSize; j++) {
+              const sampleLon = lon + (i / (gridSize - 1) - 0.5) * radiusM * 2 * degPerM;
+              const sampleLat = lat + (j / (gridSize - 1) - 0.5) * radiusM * 2 * degPerM;
+              const t = lonLatToTile(sampleLon, sampleLat, zoom);
+              const px = Math.floor((sampleLon / 360 * Math.pow(2, zoom) - t.x) * 256);
+              const py = Math.floor(((1 - Math.log(Math.tan(sampleLat * Math.PI / 180) + 1 / Math.cos(sampleLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom) - t.y) * 256);
+
+              let elevation = 0;
+              try {
+                const pixel = ctx.getImageData(Math.max(0, Math.min(255, px)), Math.max(0, Math.min(255, py)), 1, 1).data;
+                elevation = getElevationFromPixel(pixel[0], pixel[1], pixel[2]);
+              } catch(e) {}
+              grid[i][j] = elevation;
+            }
           }
+          resolve(grid);
         };
-
-        script.onerror = () => reject(new Error('네트워크 오류'));
-        document.head.appendChild(script);
+        img.onerror = function() {
+          // 타일 로드 실패시 평평한 지형
+          const grid = [];
+          for (let i = 0; i < gridSize; i++) {
+            grid[i] = [];
+            for (let j = 0; j < gridSize; j++) grid[i][j] = 0;
+          }
+          resolve(grid);
+        };
+        img.src = url;
       });
     }
 
     async function downloadOBJ() {
       if (!currentLat || !currentLon) return;
-      const radius = document.getElementById('radius').value;
+      const radius = parseInt(document.getElementById('radius').value);
       const btn = document.getElementById('downloadBtn');
       btn.disabled = true;
-      btn.textContent = '⏳ 생성 중...';
+      btn.textContent = '⏳ 고도 데이터 수집 중...';
       document.getElementById('status').textContent = '지형 데이터 처리 중...';
 
       try {
-        const res = await fetch(`${VERCEL_URL}/api/terrain?action=terrain&lat=${currentLat}&lon=${currentLon}&radius=${radius}`);
-        const blob = await res.blob();
+        const gridSize = 32;
+        const grid = await getElevationGrid(currentLat, currentLon, radius, gridSize);
+
+        // 기준 고도 (중심점)
+        const baseElev = grid[Math.floor(gridSize/2)][Math.floor(gridSize/2)];
+
+        let vertices = [];
+        let faces = [];
+
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const x = ((i / (gridSize-1)) - 0.5) * radius * 2;
+            const y = ((j / (gridSize-1)) - 0.5) * radius * 2;
+            const z = (grid[i][j] - baseElev);
+            vertices.push(`v ${x.toFixed(2)} ${z.toFixed(2)} ${y.toFixed(2)}`);
+          }
+        }
+
+        for (let i = 0; i < gridSize - 1; i++) {
+          for (let j = 0; j < gridSize - 1; j++) {
+            const a = i * gridSize + j + 1;
+            const b = a + 1;
+            const c = a + gridSize;
+            const d = c + 1;
+            faces.push(`f ${a} ${b} ${d}`);
+            faces.push(`f ${a} ${d} ${c}`);
+          }
+        }
+
+        const obj = [
+          '# 3D Terrain with Elevation Data',
+          `# 위도: ${currentLat}, 경도: ${currentLon}, 반경: ${radius}m`,
+          `# 기준고도: ${baseElev.toFixed(1)}m`,
+          '',
+          'g terrain',
+          ...vertices,
+          '',
+          'g terrain_faces',
+          ...faces
+        ].join('\n');
+
+        const blob = new Blob([obj], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = 'terrain.obj';
         a.click();
-        document.getElementById('status').textContent = '✅ 다운로드 완료!';
+        document.getElementById('status').textContent = `✅ 완료! 기준고도 ${baseElev.toFixed(1)}m`;
       } catch (err) {
         document.getElementById('status').textContent = '❌ 오류: ' + err.message;
       }
