@@ -212,16 +212,10 @@
       document.getElementById('status').textContent = '검색 중...';
 
       try {
-        const res = await fetch(`${VERCEL_URL}/api/terrain?action=search&address=${encodeURIComponent(addr)}`);
-        const data = await res.json();
-
-        if (data.error) {
-          document.getElementById('status').textContent = '❌ ' + data.error;
-          return;
-        }
-
-        currentLon = parseFloat(data.x);
-        currentLat = parseFloat(data.y);
+        // 브라우저에서 직접 V-World 호출 (JSONP 방식)
+        const result = await searchAddress(addr);
+        currentLon = parseFloat(result.x);
+        currentLat = parseFloat(result.y);
         document.getElementById('resultAddr').textContent = addr;
         document.getElementById('status').textContent = `📍 ${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
         document.getElementById('downloadBtn').disabled = false;
@@ -238,8 +232,47 @@
           document.getElementById('imap').src = `https://map.naver.com/v5/search/${encodeURIComponent(addr)}`;
         }
       } catch (err) {
-        document.getElementById('status').textContent = '❌ 오류: ' + err.message;
+        document.getElementById('status').textContent = '❌ ' + err.message;
       }
+    }
+
+    function searchAddress(address) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'vworldCallback_' + Date.now();
+        const encoded = encodeURIComponent(address);
+
+        // 도로명 먼저 시도
+        const script = document.createElement('script');
+        script.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=ROAD&key=${API_KEY}&callback=${callbackName}`;
+
+        window[callbackName] = function(data) {
+          document.head.removeChild(script);
+          delete window[callbackName];
+
+          if (data.response.status === 'OK') {
+            resolve(data.response.result.point);
+          } else {
+            // 지번으로 재시도
+            const callbackName2 = 'vworldCallback_' + Date.now();
+            const script2 = document.createElement('script');
+            script2.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=PARCEL&key=${API_KEY}&callback=${callbackName2}`;
+
+            window[callbackName2] = function(data2) {
+              document.head.removeChild(script2);
+              delete window[callbackName2];
+              if (data2.response.status === 'OK') {
+                resolve(data2.response.result.point);
+              } else {
+                reject(new Error('주소를 찾을 수 없어요'));
+              }
+            };
+            document.head.appendChild(script2);
+          }
+        };
+
+        script.onerror = () => reject(new Error('네트워크 오류'));
+        document.head.appendChild(script);
+      });
     }
 
     async function downloadOBJ() {
