@@ -49,7 +49,7 @@
     .download-btn:hover { background: #27ae60; }
     .download-btn:disabled { background: #aaa; cursor: not-allowed; box-shadow: none; }
 
-    .status { padding: 0 20px; font-size: 0.8rem; color: #888; }
+    .status { padding: 0 20px 12px; font-size: 0.8rem; color: #888; }
 
     .map-wrap { flex: 1; position: relative; }
     .map-selector { position: absolute; top: 14px; right: 14px; z-index: 100; }
@@ -206,37 +206,40 @@
       }
     }
 
-    function search() {
+    async function search() {
       const addr = document.getElementById('addr').value;
       if (!addr) return alert('주소를 입력해주세요!');
-      const encoded = encodeURIComponent(addr);
       document.getElementById('status').textContent = '검색 중...';
 
-      // 도로명 먼저 시도, 실패하면 지번으로
-      fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=ROAD&key=${API_KEY}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.response.status === 'OK') return data.response.result.point;
-          // 지번 주소로 재시도
-          return fetch(`https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=json&type=PARCEL&key=${API_KEY}`)
-            .then(r => r.json())
-            .then(d => d.response.result.point);
-        })
-        .then(pt => {
-          currentLon = parseFloat(pt.x);
-          currentLat = parseFloat(pt.y);
-          document.getElementById('resultAddr').textContent = addr;
-          document.getElementById('status').textContent = `좌표: ${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
-          document.getElementById('downloadBtn').disabled = false;
+      try {
+        const res = await fetch(`${VERCEL_URL}/api/terrain?action=search&address=${encodeURIComponent(addr)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          document.getElementById('status').textContent = '❌ ' + data.error;
+          return;
+        }
+
+        currentLon = parseFloat(data.x);
+        currentLat = parseFloat(data.y);
+        document.getElementById('resultAddr').textContent = addr;
+        document.getElementById('status').textContent = `📍 ${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
+        document.getElementById('downloadBtn').disabled = false;
+
+        if (currentMap === 'vworld') {
           map.getView().animate({
             center: ol.proj.fromLonLat([currentLon, currentLat]),
             zoom: 17, duration: 800
           });
           drawCircle();
-        })
-        .catch(() => {
-          document.getElementById('status').textContent = '주소를 찾을 수 없어요';
-        });
+        } else if (currentMap === 'kakao') {
+          document.getElementById('imap').src = `https://map.kakao.com/?q=${encodeURIComponent(addr)}`;
+        } else {
+          document.getElementById('imap').src = `https://map.naver.com/v5/search/${encodeURIComponent(addr)}`;
+        }
+      } catch (err) {
+        document.getElementById('status').textContent = '❌ 오류: ' + err.message;
+      }
     }
 
     async function downloadOBJ() {
@@ -248,7 +251,7 @@
       document.getElementById('status').textContent = '지형 데이터 처리 중...';
 
       try {
-        const res = await fetch(`${VERCEL_URL}/api/terrain?lat=${currentLat}&lon=${currentLon}&radius=${radius}`);
+        const res = await fetch(`${VERCEL_URL}/api/terrain?action=terrain&lat=${currentLat}&lon=${currentLon}&radius=${radius}`);
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -257,7 +260,7 @@
         a.click();
         document.getElementById('status').textContent = '✅ 다운로드 완료!';
       } catch (err) {
-        document.getElementById('status').textContent = '❌ 오류 발생: ' + err.message;
+        document.getElementById('status').textContent = '❌ 오류: ' + err.message;
       }
 
       btn.disabled = false;
