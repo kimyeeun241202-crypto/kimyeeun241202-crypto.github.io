@@ -8,7 +8,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f5f5; display: flex; height: 100vh; overflow: hidden; }
-    .sidebar { width: 300px; min-width: 300px; background: white; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 10; }
+    .sidebar { width: 300px; min-width: 300px; background: white; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 10; overflow-y: auto; }
     .sidebar-header { padding: 20px; border-bottom: 1px solid #eee; }
     .sidebar-header h1 { font-size: 1.1rem; font-weight: 700; color: #222; margin-bottom: 12px; }
     .search-wrap { display: flex; gap: 6px; }
@@ -22,10 +22,13 @@
     .radius-wrap { display: flex; flex-direction: column; gap: 8px; }
     .radius-wrap input[type=range] { width: 100%; accent-color: #4a90e2; }
     .radius-value { font-size: 0.9rem; color: #4a90e2; font-weight: 700; text-align: center; }
+    .layer-checks { display: flex; flex-direction: column; gap: 8px; }
+    .layer-check { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #444; cursor: pointer; }
+    .layer-check input { accent-color: #4a90e2; width: 16px; height: 16px; cursor: pointer; }
     .download-btn { margin: 20px; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 700; box-shadow: 0 2px 8px rgba(46,204,113,0.3); }
     .download-btn:hover { background: #27ae60; }
     .download-btn:disabled { background: #aaa; cursor: not-allowed; box-shadow: none; }
-    .status { padding: 0 20px 12px; font-size: 0.8rem; color: #888; }
+    .status { padding: 0 20px 12px; font-size: 0.8rem; color: #888; line-height: 1.6; }
     .map-wrap { flex: 1; position: relative; }
     .map-selector { position: absolute; top: 14px; right: 14px; z-index: 100; }
     .map-selector select { padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background: white; font-size: 0.9rem; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; outline: none; }
@@ -56,8 +59,19 @@
         <div class="radius-value" id="radiusValue">300m</div>
       </div>
     </div>
+    <div class="sidebar-section">
+      <label>레이어 선택</label>
+      <div class="layer-checks">
+        <label class="layer-check"><input type="checkbox" id="chk_contour" checked> 🟤 등고선</label>
+        <label class="layer-check"><input type="checkbox" id="chk_road" checked> 🔘 도로</label>
+        <label class="layer-check"><input type="checkbox" id="chk_parcel" checked> 🟡 필지 경계</label>
+        <label class="layer-check"><input type="checkbox" id="chk_building" checked> 🔵 건물 외곽선</label>
+        <label class="layer-check"><input type="checkbox" id="chk_river"> 💧 하천</label>
+        <label class="layer-check"><input type="checkbox" id="chk_park"> 🌳 공원/녹지</label>
+      </div>
+    </div>
     <div class="status" id="status"></div>
-    <button class="download-btn" id="downloadBtn" onclick="downloadOBJ()" disabled>⬇️ OBJ 파일 다운로드</button>
+    <button class="download-btn" id="downloadBtn" onclick="downloadOBJ()" disabled>⬇️ OBJ 다운로드</button>
   </div>
 
   <div class="map-wrap">
@@ -153,19 +167,35 @@
           if (data.response.status === 'OK') {
             resolve(data.response.result.point);
           } else {
-            const callbackName2 = 'vworldCallback_' + Date.now();
-            const script2 = document.createElement('script');
-            script2.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=PARCEL&key=${API_KEY}&callback=${callbackName2}`;
-            window[callbackName2] = function(data2) {
-              document.head.removeChild(script2);
-              delete window[callbackName2];
-              if (data2.response.status === 'OK') resolve(data2.response.result.point);
+            const cb2 = 'vworldCallback_' + Date.now();
+            const s2 = document.createElement('script');
+            s2.src = `https://api.vworld.kr/req/address?service=address&request=getcoord&crs=epsg:4326&address=${encoded}&format=jsonp&type=PARCEL&key=${API_KEY}&callback=${cb2}`;
+            window[cb2] = function(d2) {
+              document.head.removeChild(s2);
+              delete window[cb2];
+              if (d2.response.status === 'OK') resolve(d2.response.result.point);
               else reject(new Error('주소를 찾을 수 없어요'));
             };
-            document.head.appendChild(script2);
+            document.head.appendChild(s2);
           }
         };
         script.onerror = () => reject(new Error('네트워크 오류'));
+        document.head.appendChild(script);
+      });
+    }
+
+    // V-World WFS 데이터 가져오기
+    function fetchWFS(dataId, bbox) {
+      return new Promise((resolve) => {
+        const cb = 'wfsCallback_' + Date.now();
+        const script = document.createElement('script');
+        script.src = `https://api.vworld.kr/req/data?service=data&request=GetFeature&data=${dataId}&key=${API_KEY}&format=jsonp&callback=${cb}&bbox=${bbox}&page=1&size=1000`;
+        window[cb] = function(data) {
+          document.head.removeChild(script);
+          delete window[cb];
+          resolve(data);
+        };
+        script.onerror = () => { resolve(null); };
         document.head.appendChild(script);
       });
     }
@@ -194,7 +224,7 @@
       }
     }
 
-    // Mapzen Terrarium 타일에서 고도값 추출
+    // 좌표 → 타일
     function lonLatToTile(lon, lat, zoom) {
       const x = Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
       const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
@@ -209,50 +239,74 @@
       const zoom = 13;
       const tile = lonLatToTile(lon, lat, zoom);
       const url = `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${zoom}/${tile.x}/${tile.y}.png`;
-
       return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = img.width; canvas.height = img.height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
-
           const degPerM = 1 / 111000;
           const grid = [];
-
           for (let i = 0; i < gridSize; i++) {
             grid[i] = [];
             for (let j = 0; j < gridSize; j++) {
-              const sampleLon = lon + (i / (gridSize - 1) - 0.5) * radiusM * 2 * degPerM;
-              const sampleLat = lat + (j / (gridSize - 1) - 0.5) * radiusM * 2 * degPerM;
-              const t = lonLatToTile(sampleLon, sampleLat, zoom);
-              const px = Math.floor((sampleLon / 360 * Math.pow(2, zoom) - t.x) * 256);
-              const py = Math.floor(((1 - Math.log(Math.tan(sampleLat * Math.PI / 180) + 1 / Math.cos(sampleLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom) - t.y) * 256);
-
-              let elevation = 0;
+              const sLon = lon + (i / (gridSize-1) - 0.5) * radiusM * 2 * degPerM;
+              const sLat = lat + (j / (gridSize-1) - 0.5) * radiusM * 2 * degPerM;
+              const t = lonLatToTile(sLon, sLat, zoom);
+              const px = Math.floor((sLon / 360 * Math.pow(2, zoom) - t.x) * 256);
+              const py = Math.floor(((1 - Math.log(Math.tan(sLat * Math.PI / 180) + 1 / Math.cos(sLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom) - t.y) * 256);
+              let elev = 0;
               try {
-                const pixel = ctx.getImageData(Math.max(0, Math.min(255, px)), Math.max(0, Math.min(255, py)), 1, 1).data;
-                elevation = getElevationFromPixel(pixel[0], pixel[1], pixel[2]);
+                const px2 = ctx.getImageData(Math.max(0,Math.min(255,px)), Math.max(0,Math.min(255,py)), 1, 1).data;
+                elev = getElevationFromPixel(px2[0], px2[1], px2[2]);
               } catch(e) {}
-              grid[i][j] = elevation;
+              grid[i][j] = elev;
             }
           }
           resolve(grid);
         };
-        img.onerror = function() {
-          // 타일 로드 실패시 평평한 지형
+        img.onerror = () => {
           const grid = [];
-          for (let i = 0; i < gridSize; i++) {
-            grid[i] = [];
-            for (let j = 0; j < gridSize; j++) grid[i][j] = 0;
-          }
+          for (let i = 0; i < gridSize; i++) { grid[i] = []; for (let j = 0; j < gridSize; j++) grid[i][j] = 0; }
           resolve(grid);
         };
         img.src = url;
       });
+    }
+
+    // GeoJSON 폴리곤 → OBJ 면 변환
+    function geojsonToOBJ(features, groupName, offsetLon, offsetLat, z, vertexOffset) {
+      let lines = [`\ng ${groupName}`];
+      let vCount = vertexOffset;
+
+      for (const feature of features) {
+        const geom = feature.geometry;
+        if (!geom) continue;
+        const coords = geom.type === 'Polygon' ? geom.coordinates :
+                       geom.type === 'MultiPolygon' ? geom.coordinates.flat() :
+                       geom.type === 'LineString' ? [geom.coordinates] :
+                       geom.type === 'MultiLineString' ? geom.coordinates : [];
+
+        for (const ring of coords) {
+          if (!ring || ring.length < 2) continue;
+          const startV = vCount + 1;
+          for (const coord of ring) {
+            const x = (coord[0] - offsetLon) * 111000 * Math.cos(offsetLat * Math.PI / 180);
+            const y = (coord[1] - offsetLat) * 111000;
+            lines.push(`v ${x.toFixed(2)} ${z.toFixed(2)} ${y.toFixed(2)}`);
+            vCount++;
+          }
+          if (geom.type.includes('Polygon') && ring.length >= 3) {
+            const faceVerts = Array.from({length: ring.length}, (_, i) => startV + i).join(' ');
+            lines.push(`f ${faceVerts}`);
+          } else {
+            for (let i = startV; i < vCount; i++) lines.push(`l ${i} ${i+1}`);
+          }
+        }
+      }
+      return { obj: lines.join('\n'), vertexCount: vCount };
     }
 
     async function downloadOBJ() {
@@ -260,64 +314,114 @@
       const radius = parseInt(document.getElementById('radius').value);
       const btn = document.getElementById('downloadBtn');
       btn.disabled = true;
-      btn.textContent = '⏳ 고도 데이터 수집 중...';
-      document.getElementById('status').textContent = '지형 데이터 처리 중...';
+      btn.textContent = '⏳ 데이터 수집 중...';
+
+      const degR = radius / 111000;
+      const minX = (currentLon - degR).toFixed(6);
+      const minY = (currentLat - degR).toFixed(6);
+      const maxX = (currentLon + degR).toFixed(6);
+      const maxY = (currentLat + degR).toFixed(6);
+      const bbox = `${minX},${minY},${maxX},${maxY}`;
+
+      let objParts = [`# 3D Terrain OBJ`, `# 위도: ${currentLat}, 경도: ${currentLon}, 반경: ${radius}m`, ``];
+      let totalVertices = 0;
 
       try {
-        const gridSize = 32;
-        const grid = await getElevationGrid(currentLat, currentLon, radius, gridSize);
+        // 1. 등고선
+        if (document.getElementById('chk_contour').checked) {
+          document.getElementById('status').textContent = '📊 등고선 데이터 수집 중...';
+          const gridSize = 32;
+          const grid = await getElevationGrid(currentLat, currentLon, radius, gridSize);
+          const baseElev = grid[Math.floor(gridSize/2)][Math.floor(gridSize/2)];
 
-        // 기준 고도 (중심점)
-        const baseElev = grid[Math.floor(gridSize/2)][Math.floor(gridSize/2)];
-
-        let vertices = [];
-        let faces = [];
-
-        for (let i = 0; i < gridSize; i++) {
-          for (let j = 0; j < gridSize; j++) {
-            const x = ((i / (gridSize-1)) - 0.5) * radius * 2;
-            const y = ((j / (gridSize-1)) - 0.5) * radius * 2;
-            const z = (grid[i][j] - baseElev);
-            vertices.push(`v ${x.toFixed(2)} ${z.toFixed(2)} ${y.toFixed(2)}`);
+          objParts.push(`\ng terrain_mesh`);
+          for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+              const x = ((i/(gridSize-1)) - 0.5) * radius * 2;
+              const y = ((j/(gridSize-1)) - 0.5) * radius * 2;
+              const z = grid[i][j] - baseElev;
+              objParts.push(`v ${x.toFixed(2)} ${z.toFixed(2)} ${y.toFixed(2)}`);
+              totalVertices++;
+            }
+          }
+          for (let i = 0; i < gridSize-1; i++) {
+            for (let j = 0; j < gridSize-1; j++) {
+              const a = i*gridSize+j+1;
+              const b = a+1; const c = a+gridSize; const d = c+1;
+              objParts.push(`f ${a} ${b} ${d}`);
+              objParts.push(`f ${a} ${d} ${c}`);
+            }
           }
         }
 
-        for (let i = 0; i < gridSize - 1; i++) {
-          for (let j = 0; j < gridSize - 1; j++) {
-            const a = i * gridSize + j + 1;
-            const b = a + 1;
-            const c = a + gridSize;
-            const d = c + 1;
-            faces.push(`f ${a} ${b} ${d}`);
-            faces.push(`f ${a} ${d} ${c}`);
+        // 2. 도로
+        if (document.getElementById('chk_road').checked) {
+          document.getElementById('status').textContent = '🛣️ 도로 데이터 수집 중...';
+          const roadData = await fetchWFS('LT_L_ROAD', bbox);
+          if (roadData?.response?.result?.featureCollection?.features) {
+            const result = geojsonToOBJ(roadData.response.result.featureCollection.features, 'road', currentLon, currentLat, 0.1, totalVertices);
+            objParts.push(result.obj);
+            totalVertices = result.vertexCount;
           }
         }
 
-        const obj = [
-          '# 3D Terrain with Elevation Data',
-          `# 위도: ${currentLat}, 경도: ${currentLon}, 반경: ${radius}m`,
-          `# 기준고도: ${baseElev.toFixed(1)}m`,
-          '',
-          'g terrain',
-          ...vertices,
-          '',
-          'g terrain_faces',
-          ...faces
-        ].join('\n');
+        // 3. 필지
+        if (document.getElementById('chk_parcel').checked) {
+          document.getElementById('status').textContent = '🟡 필지 데이터 수집 중...';
+          const parcelData = await fetchWFS('LP_PA_CBND_BUBUN', bbox);
+          if (parcelData?.response?.result?.featureCollection?.features) {
+            const result = geojsonToOBJ(parcelData.response.result.featureCollection.features, 'parcel', currentLon, currentLat, 0.2, totalVertices);
+            objParts.push(result.obj);
+            totalVertices = result.vertexCount;
+          }
+        }
 
+        // 4. 건물
+        if (document.getElementById('chk_building').checked) {
+          document.getElementById('status').textContent = '🏢 건물 데이터 수집 중...';
+          const buildingData = await fetchWFS('LT_C_BUILDING', bbox);
+          if (buildingData?.response?.result?.featureCollection?.features) {
+            const result = geojsonToOBJ(buildingData.response.result.featureCollection.features, 'building', currentLon, currentLat, 0.3, totalVertices);
+            objParts.push(result.obj);
+            totalVertices = result.vertexCount;
+          }
+        }
+
+        // 5. 하천
+        if (document.getElementById('chk_river').checked) {
+          document.getElementById('status').textContent = '💧 하천 데이터 수집 중...';
+          const riverData = await fetchWFS('LT_C_RIVER', bbox);
+          if (riverData?.response?.result?.featureCollection?.features) {
+            const result = geojsonToOBJ(riverData.response.result.featureCollection.features, 'river', currentLon, currentLat, 0.1, totalVertices);
+            objParts.push(result.obj);
+            totalVertices = result.vertexCount;
+          }
+        }
+
+        // 6. 공원
+        if (document.getElementById('chk_park').checked) {
+          document.getElementById('status').textContent = '🌳 공원 데이터 수집 중...';
+          const parkData = await fetchWFS('LT_C_UGREEN', bbox);
+          if (parkData?.response?.result?.featureCollection?.features) {
+            const result = geojsonToOBJ(parkData.response.result.featureCollection.features, 'park', currentLon, currentLat, 0.1, totalVertices);
+            objParts.push(result.obj);
+            totalVertices = result.vertexCount;
+          }
+        }
+
+        const obj = objParts.join('\n');
         const blob = new Blob([obj], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'terrain.obj';
-        a.click();
-        document.getElementById('status').textContent = `✅ 완료! 기준고도 ${baseElev.toFixed(1)}m`;
+        a.href = url; a.download = 'terrain.obj'; a.click();
+        document.getElementById('status').textContent = `✅ 완료! 총 ${totalVertices}개 꼭짓점`;
+
       } catch (err) {
         document.getElementById('status').textContent = '❌ 오류: ' + err.message;
       }
 
       btn.disabled = false;
-      btn.textContent = '⬇️ OBJ 파일 다운로드';
+      btn.textContent = '⬇️ OBJ 다운로드';
     }
 
     document.getElementById('addr').addEventListener('keydown', e => {
